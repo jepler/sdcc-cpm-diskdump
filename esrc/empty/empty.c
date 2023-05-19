@@ -30,21 +30,32 @@ uint8_t hexword(uint8_t sum, uint16_t word) {
     return hexbyte(sum, word);
 }
 
+#define IHEX_DATA (0)
+#define IHEX_XERROR (0x81)
+#define IHEX_XBLOCKADDR (0x80)
+#define IHEX_XBLANK (0xE5)
+
+void ihex_record(uint8_t count, uint16_t address, uint8_t rectype, uint8_t *buffer) {
+    uint8_t sum = 0, i;
+    printer(':');
+    dprintf(printer, ":");
+    sum = hexbyte(sum, count);
+    sum = hexword(sum, address);
+    sum = hexbyte(sum, rectype);
+    for(i=0; i < count; i++) {
+        sum = hexbyte(sum, buffer[i]);
+    }
+    hexbyte(sum, sum);
+    printer('\r');
+    printer('\n');
+}
+
 #define HEXSIZE 32
 void print_buf(size_t offset, uint8_t *buffer, size_t buf_size) {
-    size_t i, idx;
+    size_t idx;
     for(idx=0; idx<buf_size; idx += HEXSIZE) {
         size_t count = MIN(HEXSIZE, buf_size-idx);
-        uint8_t sum = 0;
-        dprintf(printer, ":");
-        sum = hexbyte(sum, count);
-        sum = hexword(sum, idx+offset);
-        sum = hexbyte(sum, 0); // record type 0
-        for(i=0; i < count; i++) {
-            sum = hexbyte(sum, buffer[idx+i]);
-        }
-        hexbyte(sum, sum);
-        dprintf(printer, "\n");
+        ihex_record(count, offset+idx, IHEX_DATA, buffer+idx);
     }
 }
 
@@ -151,32 +162,36 @@ int main() {
 #define NUM_SECTORS (26)
         size_t offset = 0;
         uint16_t error_count=0;
+        uint8_t address[2];
         for(int track=0; track<NUM_TRACKS; track++) {
+            address[0] = track;
             dprintf(bios_conout, "%2d ", track);
             bios_settrack(track);
             for(int sector=1; sector<=NUM_SECTORS; sector++) {
+                address[1] = sector;
                 if(bios_const()) { bios_conin(); goto interrupted; }
                 bios_setsector(sector);
                 bios_setdma(dma_buffer);
                 rval = bios_read();
                 if(rval != 0) {
-                    bios_conout(' ' | sector); error_count++;
+                    ihex_record(2, 0, IHEX_XERROR, address);
+                    bios_conout('!'); error_count++;
                 }
                 else if(all_e5()) {
-                    bios_conout('`' | sector);
+                    ihex_record(2, 0, IHEX_XBLANK, address);
+                    bios_conout('_');
                     if (!skipped) 
-                    dprintf(printer, "\n");
                     skipped = 1;
                 } else {
                     bios_conout('@' | sector);
-
-                    printer(':')
+                    ihex_record(2, 0, IHEX_XBLOCKADDR, address);
                     skipped = 0;
                     print_buf(0, dma_buffer, BUF_SIZE);
                 }
                 offset += BUF_SIZE;
             }
-            dprintf(bios_conout, "\n");
+            bios_conout('\r');
+            bios_conout('\n');
         }
 
         dprintf(printer, ":00000001FF\n\x1a");
