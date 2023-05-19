@@ -32,7 +32,7 @@ int strlen(char *s);
 static unsigned char *__fastcall __numout(long i, int base, unsigned char out[]);
 
 #undef putch
-int dvprintf(void (*putch)(char), const char *fmt, va_list ap) {
+int dvprintf(putchar_func_t putch, const char *fmt, va_list ap) {
 	register int c;
 	int count = 0;
 	int type, base;
