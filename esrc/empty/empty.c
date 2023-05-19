@@ -44,17 +44,34 @@ void print_buf(size_t offset) {
     }
 }
 
+uint8_t bios_conin(void) {
+    BDOSCALL b = {B_CONIN};
+    return cpmbios(&b);
+}
+
+uint8_t bios_const(void) {
+    BDOSCALL b = {B_CONST};
+    return cpmbios(&b);
+}
+
+void bios_conout(uint8_t c) {
+    BDOSCALL b = {B_CONOUT, c<<8};
+    cpmbios(&b);
+}
+
 int main() {
 	FCB *fcb_ptr = NULL;
 	uint8_t rval;
 	sys_init();
 
+        dprintf(bios_conout, "Printing via BIOS\n");
+
 	fcb_ptr = malloc(sizeof(FCB));
 
 	memset(fcb_ptr, 0, sizeof(FCB));
-        if(rval != 0) { cprintf("error %02x\n", rval); return EXIT_FAILURE; }
 	cpm_setFCBname("empty", "com", fcb_ptr);
 	rval = cpm_performFileOp(fop_open, fcb_ptr);
+        if(rval != 0) { cprintf("error %02x\n", rval); return EXIT_FAILURE; }
 
         size_t offset = 0x100;
         while(1) {
@@ -63,9 +80,16 @@ int main() {
             if(rval != 0) { break; }
             print_buf(offset);
             offset += BUF_SIZE;
+            break;
         }
 
         cprintf(":00000001FF\n");
+
+        cprintf("Press any key");
+        while(!bios_const()) {};
+        cprintf("\nKey pressed, finding out what it is\n");
+        cprintf("You pressed character #%d\n", (int)bios_conin());
+
 	return (EXIT_SUCCESS);
 }
 

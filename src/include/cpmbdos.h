@@ -77,5 +77,12 @@ uint8_t cpmbdos(BDOSCALL *p);
 
 uint8_t cpmbdos_extn(BDOSCALL *p, uint16_t* ret_ba, uint16_t *ret_hl);
 
+#define B_CONST 6
+#define B_CONIN 9
+#define B_CONOUT 0xc
+
+// call a BIOS routine
+uint8_t cpmbios(BDOSCALL *p);
+
 #endif /* __CPM_BDOS_INTERFACES__ */
 

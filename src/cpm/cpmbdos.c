@@ -72,3 +72,61 @@ uint8_t cpmbdos_extn(BDOSCALL *p, uint16_t* ret_ba, uint16_t *ret_hl) __naked {
 	__endasm;
 }
 
+uint8_t cpmbios(BDOSCALL *p) __naked {
+	p;
+	__asm
+
+            push	ix
+            ld		ix,#0
+            add		ix,sp
+            // ix is now pointer to our stack frame
+
+            ld		l,4(ix)
+            ld		h,5(ix)
+            // hl now points at p!
+
+            // load parameters
+            ld          a,(hl)
+            inc hl
+            ld          b,(hl)
+            inc hl
+            ld          c,(hl)
+
+            // use the trampoline into bios from A register
+            call 01$
+            pop ix
+
+            // return value goes in `l` register
+            ld l, a
+            ret
+
+            01$: // aka GOBIOS
+            // prepare the stack slot that will get ex'd with the bios address
+            push hl
+
+            ld hl,(1)  // AKA wboota
+            ld l, a
+            ex (sp),hl // others write ex hl,(sp)
+
+            // jumps to BIOS routine
+            ret
+
+#if 0
+            /// bdoscall starts here
+		push	ix
+		ld		ix,#0
+		add		ix,sp
+		
+		ld		l,4(ix)
+		ld		h,5(ix)
+		ld		c,(hl)	; Load function
+		inc		hl
+		ld		e,(hl)	; Prepare parameter in E ...
+		inc		hl
+		ld		d,(hl)  ; And prepare parameter in D
+		call	5		; Make BDOS call!
+		pop		ix
+		ret
+#endif
+	__endasm;
+}
