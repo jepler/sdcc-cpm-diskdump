@@ -1,7 +1,11 @@
-sdcc-cpm-example
-================
+# sdcc-cpm-diskdump
 
-HELLO WORLD / experimentation program running under CP/M-80, crosscompiled with SDCC (Small Devices C Compiler).
-It's based on sources from http://n8vem-sbc.pbworks.com/ (maily found in the unified-bios package).
+This program is designed for the Xerox 820 with 2 8" SSDD floppy drives.
 
-This comes without any warranty: It's mostly a experimentation code for my N8VEM SBC V2.
+It reads the "B" drive in physical sector order, dumping an ixex-style
+listing to the printer port at 19200 with no handshaking.
+
+This output can be received on a host computer and used under CPM
+emulators or with cpmtools cpmls/cpmcp/etc.
+
+This comes without any warranty.
