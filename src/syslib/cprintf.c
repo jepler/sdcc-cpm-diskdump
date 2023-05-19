@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "cprintf.h"
 #include "cpm_sysfunc.h"
 
 #undef printf
@@ -21,9 +22,6 @@
 #ifndef strlen
 int strlen(char *s);
 #endif
-
-#define putch(ch) cpm_putchar((char)ch)
-
 
 #ifndef NULL
 # define NULL ((void*)0L)
@@ -33,7 +31,8 @@ int strlen(char *s);
 #define NUMLTH 11
 static unsigned char *__fastcall __numout(long i, int base, unsigned char out[]);
 
-int cprintf(const char *fmt, ...) {
+#undef putch
+int dvprintf(void (*putch)(char), const char *fmt, va_list ap) {
 	register int c;
 	int count = 0;
 	int type, base;
@@ -42,9 +41,6 @@ int cprintf(const char *fmt, ...) {
 	char padch = ' ';
 	int  minsize, maxsize;
 	unsigned char out[NUMLTH + 1];
-	va_list ap;
-
-	va_start(ap, fmt);
 
 	while (c = *fmt++) {
 		count++;
@@ -163,8 +159,23 @@ int cprintf(const char *fmt, ...) {
 			}
 		}
 	}
-	va_end(ap);
 	return count;
+}
+
+int dprintf(putchar_func_t func, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int result = dvprintf(func, fmt, ap);
+    va_end(ap);
+    return result;
+}
+
+int cprintf(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int result = dvprintf(cpm_putchar, fmt, ap);
+    va_end(ap);
+    return result;
 }
 
 const char nstring[] = "0123456789ABCDEF";
