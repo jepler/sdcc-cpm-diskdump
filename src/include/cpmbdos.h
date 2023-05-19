@@ -77,11 +77,25 @@ uint8_t cpmbdos(BDOSCALL *p);
 
 uint8_t cpmbdos_extn(BDOSCALL *p, uint16_t* ret_ba, uint16_t *ret_hl);
 
-#define B_CONST 6
-#define B_CONIN 9
-#define B_CONOUT 0xc
+#define B_BOOT     (3*0) // cold start
+#define B_WBOOT    (3*1) // warm start
+#define B_CONST    (3*2) // console status
+#define B_CONIN    (3*3) // console character in
+#define B_CONOUT   (3*4) // console character out
+#define B_LIST     (3*5) // list character out
+#define B_PUNCH    (3*6) // punch character out
+#define B_READER   (3*7) // reader character in
+#define B_HOME     (3*8) // move head to home position
+#define B_SELDSK   (3*9) // select disk
+#define B_SETTRK  (3*10) // set track number
+#define B_SETSEC  (3*11) // set sector number
+#define B_SETDMA  (3*12) // set dma address
+#define B_READ    (3*13) // read disk
+#define B_WRITE   (3*14) // write disk
+#define B_LISTST  (3*15) // return list status
+#define B_SECTRAN (3*16) // sector translate (needs a cpmbios_extn!)
 
-// call a BIOS routine
+// call a BIOS routine (BC <= parm16, returns A)
 uint8_t cpmbios(BDOSCALL *p);
 
 #endif /* __CPM_BDOS_INTERFACES__ */
