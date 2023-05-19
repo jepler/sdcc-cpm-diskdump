@@ -37,5 +37,5 @@ INCLUDE_DIR = -I$(SRC_DIR)/include -I$(SRC_DIR)
 # Compilation / Assembly / Linking flags
 CCC_FLAGS = -c -mz80 -D__SDCC__=1 $(INCLUDE_DIR)
 CAS_FLAGS = -plosff 
-CLD_FLAGS = 
+CLD_FLAGS = -k /usr/share/sdcc/lib/z80
 
