@@ -38,7 +38,6 @@ uint8_t hexword(uint8_t sum, uint16_t word) {
 void ihex_record(uint8_t count, uint16_t address, uint8_t rectype, uint8_t *buffer) {
     uint8_t sum = 0, i;
     printer(':');
-    dprintf(printer, ":");
     sum = hexbyte(sum, count);
     sum = hexword(sum, address);
     sum = hexbyte(sum, rectype);
