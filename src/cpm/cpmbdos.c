@@ -88,9 +88,9 @@ uint8_t cpmbios(BDOSCALL *p) __naked {
             // load parameters
             ld          a,(hl)
             inc hl
-            ld          b,(hl)
-            inc hl
             ld          c,(hl)
+            inc hl
+            ld          b,(hl)
 
             // use the trampoline into bios from A register
             call 01$
