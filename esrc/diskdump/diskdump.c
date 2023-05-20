@@ -154,7 +154,6 @@ int main() {
         printer = sio_b_out;
         dprintf(bios_conout, "Dumping disk from B: via SIO B (printer) at 19200,8N1\n");
         dprintf(bios_conout, "(any key interrupts)\n");
-        dprintf(sio_b_out, "// hi from sio b!\n");
         bios_seldsk(1);
         bios_home();
 
