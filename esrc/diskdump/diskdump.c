@@ -7,8 +7,7 @@
 #include "syslib/cpm_sysfunc.h"
 #include "syslib/ansi_term.h"
 
-#define BUF_SIZE 128
-static uint8_t dma_buffer[BUF_SIZE];
+#define SECTOR_SIZE 128
 
 putchar_func_t printer;
 
@@ -17,6 +16,8 @@ void sys_init(void) {
 }
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+const uint8_t xlate[] = {1, 7, 13, 19, 25, 5, 11, 17, 23, 3, 9, 15, 21, 2, 8, 14, 20, 26, 6, 12, 18, 24, 4, 10, 16, 22};
 
 const uint8_t hexchars[] = "0123456789ABCDEF";
 uint8_t hexbyte(uint8_t sum, uint8_t byte) {
@@ -49,13 +50,8 @@ void ihex_record(uint8_t count, uint16_t address, uint8_t rectype, uint8_t *buff
     printer('\n');
 }
 
-#define HEXSIZE 32
 void print_buf(size_t offset, uint8_t *buffer, size_t buf_size) {
-    size_t idx;
-    for(idx=0; idx<buf_size; idx += HEXSIZE) {
-        size_t count = MIN(HEXSIZE, buf_size-idx);
-        ihex_record(count, offset+idx, IHEX_DATA, buffer+idx);
-    }
+    ihex_record(buf_size, offset, IHEX_DATA, buffer);
 }
 
 uint8_t bios_conin(void) {
@@ -104,10 +100,10 @@ uint8_t bios_setdma(void *ptr) {
     return cpmbios(&b);
 }
 
-uint8_t all_e5() {
+uint8_t all_e5(uint8_t *data_ptr) {
     uint8_t i;
-    for(i=0; i<BUF_SIZE; i++) {
-        if(dma_buffer[i] != 0xe5) { return 0; }
+    for(i=0; i<SECTOR_SIZE; i++) {
+        if(data_ptr[i] != 0xe5) { return 0; }
     }
     return 1;
 }
@@ -123,13 +119,20 @@ __sfr __at(7) X810_SIO_B_CONTROL;
 #define sio_b_write_reg(a, b) (X810_SIO_B_CONTROL = (a), X810_SIO_B_CONTROL = (b))
 
 
+#define NUM_TRACKS (77)
+#define NUM_SECTORS (26)
+uint8_t track_buffer[SECTOR_SIZE * NUM_SECTORS];
+uint8_t address[2];
+uint8_t validity[NUM_SECTORS+1];
+
 void sio_b_out(uint8_t c) {
     while(!(X810_SIO_B_CONTROL & 4)) { /* NOTHING */ }
     X810_SIO_B_DATA = c;
 }
 
 int main() {
-	uint8_t rval, skipped=0;
+	uint8_t rval;
+        uint16_t error_count=0;
 	sys_init();
 
         X810_SIO_B_RATE = 0xf; // 19200 (*16) = 307200
@@ -156,39 +159,40 @@ int main() {
         dprintf(bios_conout, "(any key interrupts)\n");
         bios_seldsk(1);
         bios_home();
-
-#define NUM_TRACKS (77)
-#define NUM_SECTORS (26)
-        size_t offset = 0;
-        uint16_t error_count=0;
-        uint8_t address[2];
         for(int track=0; track<NUM_TRACKS; track++) {
             address[0] = track;
             dprintf(bios_conout, "%2d ", track);
             bios_settrack(track);
-            for(int sector=1; sector<=NUM_SECTORS; sector++) {
-                address[1] = sector;
+            for(int logical_sector=0; logical_sector<NUM_SECTORS; logical_sector++) {
+                int sector = xlate[logical_sector];
                 if(bios_const()) { bios_conin(); goto interrupted; }
                 bios_setsector(sector);
-                bios_setdma(dma_buffer);
+                bios_setdma(track_buffer + SECTOR_SIZE * (sector-1));
                 rval = bios_read();
+                validity[sector] = rval == 0;
                 if(rval != 0) {
-                    ihex_record(2, 0, IHEX_XERROR, address);
                     bios_conout('!'); error_count++;
+                } else {
+                    bios_conout('@' | sector);
                 }
-                else if(all_e5()) {
+            }
+            dprintf(bios_conout, "\r%2d ", track);
+            for(int sector=1; sector<=NUM_SECTORS; sector++) {
+                if(bios_const()) { bios_conin(); goto interrupted; }
+                address[1] = sector;
+                uint8_t *data_ptr = track_buffer + SECTOR_SIZE * (sector-1);
+                if(!validity[sector]) {
+                    bios_conout('!');
+                    ihex_record(2, 0, IHEX_XERROR, address);
+                } else if(all_e5(data_ptr)) {
+                    bios_conout('`' | sector);
                     ihex_record(2, 0, IHEX_XBLANK, address);
-                    bios_conout('_');
-                    if (!skipped) 
-                    skipped = 1;
                 } else {
                     bios_conout('@' | sector);
                     ihex_record(2, 0, IHEX_XBLOCKADDR, address);
-                    skipped = 0;
-                    print_buf(0, dma_buffer, BUF_SIZE);
+                    print_buf(0, data_ptr, SECTOR_SIZE);
                 }
-                offset += BUF_SIZE;
-            }
+            } 
             bios_conout('\r');
             bios_conout('\n');
         }
