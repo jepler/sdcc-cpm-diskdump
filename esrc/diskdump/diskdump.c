@@ -132,8 +132,9 @@ int main() {
 	uint8_t rval, skipped=0;
 	sys_init();
 
-        X810_SIO_B_RATE = 0xf; // 19200
-        sio_b_write_reg(4, 0x44); // 16x clock, 1 stop bit, no parity
+        X810_SIO_B_RATE = 0xf; // 19200 (*16) = 307200
+        // sio_b_write_reg(4, 0x44); // 16x clock, 1 stop bit, no parity
+        sio_b_write_reg(4, 0x04); // 1x clock, 1 stop bit, no parity
         sio_b_write_reg(5, 0b01101010); // TX 8 bits, TX-enable, RTS-enable
         sio_b_write_reg(3, 0b11000001); // RX 8 bits, RX-enable
 
