@@ -1,7 +1,8 @@
 # Here begins the actual creation of destination files
-libraries: $(BIN_DIR)/cprintf.rel $(BIN_DIR)/cpm0.rel $(BIN_DIR)/cpmbdos.rel $(BIN_DIR)/ansi_term.rel $(BIN_DIR)/cpm_sysfunc.rel \
+LIBRARIES=$(BIN_DIR)/cprintf.rel $(BIN_DIR)/cpm0.rel $(BIN_DIR)/cpmbdos.rel $(BIN_DIR)/ansi_term.rel $(BIN_DIR)/cpm_sysfunc.rel \
 			$(BIN_DIR)/hw_common.rel $(BIN_DIR)/hw_modprn02.rel
 
+.PHONY: libraries-clean
 libraries-clean:
 	rm -f $(BIN_DIR)/*.rel
 

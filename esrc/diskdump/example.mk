@@ -1,9 +1,11 @@
+all: example-diskdump
+.PHONY: example-diskdump
 example-diskdump: $(BIN_DIR)/diskdump.com
 
-$(BIN_DIR)/diskdump.com:	tools $(BIN_DIR)/diskdump.ihx
+$(BIN_DIR)/diskdump.com:	$(TOOLS) $(BIN_DIR)/diskdump.ihx
 	$(LBIN_DIR)/load $(BIN_DIR)/diskdump
 
-$(BIN_DIR)/diskdump.ihx:	libraries $(BIN_DIR)/diskdump.rel $(BIN_DIR)/diskdump.arf 
+$(BIN_DIR)/diskdump.ihx:	$(LIBRARIES) $(BIN_DIR)/diskdump.rel $(BIN_DIR)/diskdump.arf 
 	$(CLD) $(CLD_FLAGS) -nf $(BIN_DIR)/diskdump.arf
 
 $(BIN_DIR)/diskdump.rel: $(ESRC_DIR)/diskdump/diskdump.c

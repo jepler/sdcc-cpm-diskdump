@@ -1,7 +1,8 @@
-tools:	$(LBIN_DIR)/load $(LBIN_DIR)/binpak
+TOOLS=$(LBIN_DIR)/load $(LBIN_DIR)/binpak
 
 LCFLAGS=-O2
 
+.PHONY: tools-clean
 tools-clean:
 	rm -f $(LBIN_DIR)/*
 
